@@ -1,15 +1,12 @@
-local ESX,QBCore = nil,nil
+local ESX = nil
 local PlayerData = {}
+
 CreateThread(function ()
     if GetResourceState('es_extended') == 'started' then
         ESX = exports['es_extended']:getSharedObject()
-    elseif GetResourceState('qb-core') == 'started' then
-        QBCore = exports['qb-core']:GetCoreObject()
     end
 end)
-RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
-    PlayerData = QBCore.Functions.GetPlayerData()
-end)
+
 RegisterNetEvent('esx:playerLoaded', function ()
     PlayerData = ESX.GetPlayerData()
 end)
@@ -30,8 +27,8 @@ CreateThread(function()
                         lockerArea = k,
                         distance = v.DrawDistance,
                         onSelect = function ()
-                            lib.callback('ts-lockers:getLockers', false, function(data)
-                                TriggerEvent("ts-lockers:OpenMenu", { locker = k, info = data })
+                            lib.callback('rgx-lockers:getLockers', false, function(data)
+                                TriggerEvent("rgx-lockers:OpenMenu", { locker = k, info = data })
                             end, k)
                         end
                     },
@@ -45,8 +42,8 @@ CreateThread(function()
                 DrawText3Ds(v.coords.x, v.coords.y, v.coords.z + 1.0, "Press ~r~[G]~s~ To Open ~y~Locker~s~")
                 DisableControlAction(0, 47)
                 if IsDisabledControlJustPressed(0, 47) then
-                    lib.callback('ts-lockers:getLockers', false, function(data)
-                        TriggerEvent("ts-lockers:OpenMenu", { locker = k, info = data })
+                    lib.callback('rgx-lockers:getLockers', false, function(data)
+                        TriggerEvent("rgx-lockers:OpenMenu", { locker = k, info = data })
                     end, k)
                 end
             end
@@ -54,33 +51,23 @@ CreateThread(function()
     end
 end)    
 
-
-RegisterNetEvent("ts-lockers:OpenMenu", function(data)
+RegisterNetEvent("rgx-lockers:OpenMenu", function(data)
     lib.registerContext({
         id = 'locker_menu',
-        title = 'EX Lockers',
+        title = 'Titan Lockers',
         options = {
             ['Create Locker'] = {
                 description = 'Create A Locker',
                 arrow = true,
-                event = 'ts-lockers:CreateLocker',
+                event = 'rgx-lockers:CreateLocker',
                 args = {
-                    branch = data.locker
-                }
-            },
-            ['Open Locker'] = {
-                description = 'Open Existing Locker',
-                arrow = true,
-                event = 'ts-lockers:LockerList',
-                args = {
-                    arg = data.info,
                     branch = data.locker
                 }
             },
             ['Open Your Locker'] = {
                 description = 'Open Self Locker',
                 arrow = true,
-                event = 'ts-lockers:OpenSelfLocker',
+                event = 'rgx-lockers:OpenSelfLocker',
                 args = {
                     arg = data.info,
                     branch = data.locker
@@ -89,7 +76,7 @@ RegisterNetEvent("ts-lockers:OpenMenu", function(data)
             ['Delete Locker'] = {
                 description = 'Delete Existing Locker',
                 arrow = true,
-                event = 'ts-lockers:LockerListDelete',
+                event = 'rgx-lockers:LockerListDelete',
                 args = {
                     arg = data.info,
                     branch = data.locker
@@ -98,7 +85,7 @@ RegisterNetEvent("ts-lockers:OpenMenu", function(data)
             ['Change Locker Password'] = {
                 description = 'Change Existing Locker Password',
                 arrow = true,
-                event = 'ts-lockers:LockerChangePass',
+                event = 'rgx-lockers:LockerChangePass',
                 args = {
                     arg = data.info,
                     branch = data.locker
@@ -109,75 +96,18 @@ RegisterNetEvent("ts-lockers:OpenMenu", function(data)
     lib.showContext('locker_menu')
 end)
 
-RegisterNetEvent('ts-lockers:LockerList', function(data)
-    local optionTable = {}
-    local arg = data.arg
-    local idt = 2
-    if arg then
-        for k, v in pairs(arg) do
-            idt = idt + 1
-            optionTable["Locker ID: " .. v.dbid] = {
-                description = 'Owner: ' .. v.playername,
-                arrow = true,
-                event = 'ts-lockers:client:OpenLocker',
-                args = v
-            }
-        end
-    end
-    lib.registerContext({
-        id = 'locker_list',
-        title = data.branch .. ' Locker Menu',
-        menu = "locker_menu",
-        options = optionTable
-    })
-    lib.showContext('locker_list')
-end)
-
-RegisterNetEvent('ts-lockers:LockerChangePass', function(data)
-    local plyIdentifier = PlayerData.identifier or PlayerData.citizenid
+RegisterNetEvent('rgx-lockers:LockerChangePass', function(data)
+    local plyIdentifier = PlayerData.identifier
     if not plyIdentifier then
-        plyIdentifier = (ESX and ESX.GetPlayerData().identifier) or (QBCore and QBCore.Functions.GetPlayerData())
-    end
-    local lockers = data.arg
-    print(lockers)
-    if lockers then
-        local exist = false
-        for k, v in pairs(lockers) do
-            if plyIdentifier == v.owner then
-                exist = true
-                TriggerEvent('ts-lockers:client:ChangePassword', { data = v })
-            end
-        end
-        print(exist,plyIdentifier)
-        if not exist then
-            lib.defaultNotify({
-                title = 'Lockers',
-                description = 'You don\'t have a locker',
-                status = 'error'
-            })
-        end
-    else
-        lib.defaultNotify({
-            title = 'Lockers',
-            description = 'You don\'t have a locker',
-            status = 'error'
-        })
-    end
-end)
-
-RegisterNetEvent('ts-lockers:LockerListDelete', function(data)
-    local plyIdentifier = PlayerData.identifier or PlayerData.citizenid
-    if not plyIdentifier then
-        plyIdentifier = (ESX and ESX.GetPlayerData().identifier) or (QBCore and QBCore.Functions.GetPlayerData())
+        plyIdentifier = ESX.GetPlayerData().identifier
     end
     local lockers = data.arg
     if lockers then
         local exist = false
         for k, v in pairs(lockers) do
-            print(plyIdentifier,v.owner)
             if plyIdentifier == v.owner then
                 exist = true
-                TriggerEvent('ts-lockers:client:DeleteLocker', { data = v, id = v.lockerid })
+                TriggerEvent('rgx-lockers:client:ChangePassword', { data = v })
             end
         end
         if not exist then
@@ -196,17 +126,47 @@ RegisterNetEvent('ts-lockers:LockerListDelete', function(data)
     end
 end)
 
-RegisterNetEvent('ts-lockers:client:ChangePassword', function(info)
+RegisterNetEvent('rgx-lockers:LockerListDelete', function(data)
+    local plyIdentifier = PlayerData.identifier
+    if not plyIdentifier then
+        plyIdentifier = ESX.GetPlayerData().identifier
+    end
+    local lockers = data.arg
+    if lockers then
+        local exist = false
+        for k, v in pairs(lockers) do
+            if plyIdentifier == v.owner then
+                exist = true
+                TriggerEvent('rgx-lockers:client:DeleteLocker', { data = v, id = v.lockerid })
+            end
+        end
+        if not exist then
+            lib.defaultNotify({
+                title = 'Lockers',
+                description = 'You don\'t have a locker',
+                status = 'error'
+            })
+        end
+    else
+        lib.defaultNotify({
+            title = 'Lockers',
+            description = 'You don\'t have a locker',
+            status = 'error'
+        })
+    end
+end)
+
+RegisterNetEvent('rgx-lockers:client:ChangePassword', function(info)
     local data = info.data
     local id = data.lockerid
-    local input = lib.inputDialog('TS Lockers',
+    local input = lib.inputDialog('Titan Lockers',
         { { type = "input", label = "Locker Password", password = true, icon = 'lock' } })
     if input and input[1] then
-        TriggerServerEvent('ts-lockers:server:ChangePass', id, input[1])
+        TriggerServerEvent('rgx-lockers:server:ChangePass', id, input[1])
     end
 end)
 
-RegisterNetEvent('ts-lockers:client:DeleteLocker', function(info)
+RegisterNetEvent('rgx-lockers:client:DeleteLocker', function(info)
     local id = info.id
     lib.registerContext({
         id = 'delete_locker_confirmation',
@@ -216,7 +176,7 @@ RegisterNetEvent('ts-lockers:client:DeleteLocker', function(info)
             ['Confirm'] = {
                 description = 'Confirm Deletion of Your Locker',
                 arrow = true,
-                serverEvent = 'ts-lockers:server:DeleteLocker',
+                serverEvent = 'rgx-lockers:server:DeleteLocker',
                 args = id
             },
             ['Cancel'] = {
@@ -224,44 +184,24 @@ RegisterNetEvent('ts-lockers:client:DeleteLocker', function(info)
                 arrow = true,
                 menu = 'locker_menu'
             }
-
         }
     })
     lib.showContext('delete_locker_confirmation')
 end)
 
 function OpenTSLocker(lid)
-    if Config.OXInventory then
-        exports.ox_inventory:openInventory('stash', lid)
-    elseif Config.QBInventory then
-        TriggerEvent("inventory:client:SetCurrentStash", lid)
-        TriggerServerEvent("inventory:server:OpenInventory", "stash", lid, {
-            maxweight = Config.MaxWeight,
-            slots = Config.MaxSlots,
-        })
-    elseif Config.ChezzaInv then
-        TriggerEvent('inventory:openInventory', {
-            type = "stash",
-            id = lid,
-            title = lid,
-            weight = Config.MaxWeight,
-            delay = 200,
-            save = true
-        })
-    end
+    exports.ox_inventory:openInventory('stash', lid)
 end
 
-
-RegisterNetEvent('ts-lockers:OpenSelfLocker', function(info)
-    local plyIdentifier = PlayerData.identifier or PlayerData.citizenid
+RegisterNetEvent('rgx-lockers:OpenSelfLocker', function(info)
+    local plyIdentifier = PlayerData.identifier
     if not plyIdentifier then
-        plyIdentifier = (ESX and ESX.GetPlayerData().identifier) or (QBCore and QBCore.Functions.GetPlayerData())
+        plyIdentifier = ESX.GetPlayerData().identifier
     end
     local lockers = info.arg
     if lockers then
         local exist = false
         for k, v in pairs(lockers) do
-            print(plyIdentifier,v.owner)
             if plyIdentifier == v.owner then
                 exist = true
                 OpenTSLocker(v.lockerid) 
@@ -283,29 +223,12 @@ RegisterNetEvent('ts-lockers:OpenSelfLocker', function(info)
     end
 end)
 
-RegisterNetEvent('ts-lockers:client:OpenLocker', function(info)
-    local data = info
-    local input = lib.inputDialog('TS Lockers',
-        { { type = "input", label = "Locker Password", password = true, icon = 'lock' } })
-    if input and input[1] then
-        if tostring(input[1]) == tostring(data.password) then
-            OpenTSLocker(data.lockerid)
-        else
-            lib.defaultNotify({
-                title = 'Lockers',
-                description = 'Wrong Password',
-                status = 'error'
-            })
-        end
-    end
-end)
-
-RegisterNetEvent("ts-lockers:CreateLocker", function(data)
+RegisterNetEvent("rgx-lockers:CreateLocker", function(data)
     local area = data.branch
-    local input = lib.inputDialog('TS Lockers - Create Password',
+    local input = lib.inputDialog('Titan Lockers - Create Password',
         { { type = "input", label = "Locker Password", password = true, icon = 'lock' } })
     if input and input[1] then
-        TriggerServerEvent("ts-lockers:server:CreateLocker", input[1], area)
+        TriggerServerEvent("rgx-lockers:server:CreateLocker", input[1], area)
     end
 end)
 
