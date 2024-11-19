@@ -1,9 +1,7 @@
 Config = {}
 Config.Debug = false
-Config.QBInventory = false
 Config.OXInventory = true
 Config.Target = true
-Config.ChezzaInv = false
 Config.MaxSlots = 50
 Config.MaxWeight = 5000000
 Config.LockerZone = {
