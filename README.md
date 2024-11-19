@@ -6,6 +6,7 @@
 - Allows Players To Create Lockers at the Configured Locations Ingame. (Only 1 at a location)
 - Ability to Change Password
 - Ability to Delete Lockers
+- Players Cant Store Cash/Dirty Cash In Locker.
 
 # Dependency
 - ox_lib - https://github.com/overextended/ox_lib
